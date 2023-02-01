@@ -5,7 +5,6 @@ use winit::{
     window::Window,
 };
 
-pub mod color_converter;
 mod texture;
 
 #[repr(C)]
@@ -59,7 +58,7 @@ const INDICES: &[u16] = &[0, 1, 2, 1, 3, 2];
 
 #[derive(Debug)]
 pub enum UserEvent {
-    NewImage(u32, u32, &'static [u8]),
+    NewImage(Vec<u8>),
 }
 
 struct State {
@@ -246,16 +245,9 @@ impl State {
         false
     }
 
-    fn update(&mut self, width: u32, height: u32, image: &[u8]) {
-        let texture = texture::Texture::from_raw_buffer(
-            &self.device,
-            &self.queue,
-            image,
-            height,
-            width,
-            Some("image"),
-        )
-        .unwrap();
+    fn update(&mut self, image: Vec<u8>) {
+        let texture =
+            texture::Texture::from_vec(&self.device, &self.queue, image, "image").unwrap();
 
         self.diffuse_bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.texture_bind_group_layout,
@@ -365,8 +357,8 @@ pub async fn run(event_loop: EventLoop<UserEvent>, window: Window) {
             window.request_redraw();
         }
         Event::UserEvent(event) => match event {
-            UserEvent::NewImage(height, width, image) => {
-                state.update(width, height, image);
+            UserEvent::NewImage(image) => {
+                state.update(image);
                 match state.render() {
                     Ok(_) => {}
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {

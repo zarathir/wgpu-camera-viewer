@@ -22,7 +22,7 @@ fn main() -> Result<()> {
     let mut fmt = dev.format().expect("Failed to read format");
     fmt.width = 1280;
     fmt.height = 720;
-    fmt.fourcc = FourCC::new(b"YUYV");
+    fmt.fourcc = FourCC::new(b"MJPG");
     dev.set_format(&fmt).expect("Failed to write format");
 
     // The actual format chosen by the device driver may differ from what we
@@ -44,12 +44,9 @@ fn main() -> Result<()> {
 
     thread::spawn(move || loop {
         let buf = stream.next().unwrap().0;
-        let image = &mut [];
-        webcam_viewer::color_converter::yuv422_to_rgba8(buf, image);
-
-        proxy
-            .send_event(UserEvent::NewImage(fmt.width, fmt.height, image))
-            .unwrap();
+        if !buf.is_empty() {
+            proxy.send_event(UserEvent::NewImage(buf.to_vec())).unwrap();
+        }
     });
 
     pollster::block_on(webcam_viewer::run(event_loop, window));

@@ -18,6 +18,16 @@ impl Texture {
         Self::from_image(device, queue, &img, Some(label))
     }
 
+    pub fn from_vec(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        buffer: Vec<u8>,
+        label: &str,
+    ) -> Result<Self> {
+        let img = image::load_from_memory(buffer.as_slice())?;
+        Self::from_image(device, queue, &img, Some(label))
+    }
+
     pub fn from_image(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
